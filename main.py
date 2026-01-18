@@ -2,7 +2,6 @@ import yt_dlp
 import numpy
 from decord import VideoReader
 from decord import cpu, gpu
-from matplotlib import pyplot as plt
 import os
 import fpstimer
 import sys
@@ -18,11 +17,15 @@ def downloader(ydl_opts: dict, urls: list):
         error_code = ydl.download(URLS)
     return error_code
 
+def create_video_obj(video_file: str="tester.mp4"):
+    with open(video_file, 'rb') as f:
+        #print(os.get_terminal_size().columns, os.get_terminal_size().lines)
+        vr = VideoReader(f, ctx=cpu(0), width=os.get_terminal_size().columns, height=os.get_terminal_size().lines)
+        f.close()
+    return vr
 
-def video_to_arr(video_file: str="tester.mp4", frame_skip: int=4):
+def video_to_arr(vr, frame_skip: int=4):
     all_frames = []
-    with open('tester.mp4', 'rb') as f:
-      vr = VideoReader(f, ctx=cpu(0), width=256, height=144, num_threads=4)
 
     for i in range(0,len(vr),frame_skip):
         frame = vr[i].asnumpy()
@@ -35,8 +38,12 @@ def convert_video_to_GS(frames):
     frame_count = 0
     total = len(frames)
     for current_frame in frames:
-        gs_frame = numpy.zeros((len(current_frame), len(current_frame[0]),1))
+        # vector method
+        gs_frame = (current_frame[:,:,0]*0.299)+(current_frame[:,:,1]*0.587)+(current_frame[:,:,2]*0.114)
+        """
+        #for loop method
         row_i, column_i = 0, 0
+
         for row in current_frame:
             for pixel in row:
                 r,g,b = pixel[0], pixel[1], pixel[2]
@@ -45,24 +52,29 @@ def convert_video_to_GS(frames):
                 column_i += 1
             column_i = 0
             row_i += 1
+"""
         frames[frame_count] = gs_frame
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
     return frames
 
-def video_to_ascii(frames):
-    ASCII_COLOURMAP = list(" .-:=+*#@")
+def video_to_ascii(frames, reverse_map: bool = False):
+    ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
+    if reverse_map:
+        ASCII_COLOURMAP.reverse()
     frame_count = 0
     total = len(frames)
     all_ascii_frames = []
     for current_frame in frames:
         ascii_frame = []
-        for row in current_frame:
+        indexed_frame = (current_frame[:] * len(ASCII_COLOURMAP) - 1) // 255
+        for row in indexed_frame:
             row_string = ""
+            #row = (row[:]* len(ASCII_COLOURMAP)-1) // 255
             for pixel in row:
-                x = sum(pixel) // 3  # integer division
-                x = (x * len(ASCII_COLOURMAP)) // 255  # rescaling
-                row_string += ASCII_COLOURMAP[int(x)]
+                # pixel-1 to prevent index errors
+                #char_i = (pixel-1 * len(ASCII_COLOURMAP)) // 255  # rescaling
+                row_string += ASCII_COLOURMAP[int(pixel)]
             ascii_frame.append(row_string)
         all_ascii_frames.append(ascii_frame)
         frame_count += 1
@@ -87,19 +99,29 @@ def draw_video(frames, framerate):
         timer.sleep()
         os.system('cls' if os.name == 'nt' else 'clear')
 
-def draw_video_matplot(frames):
-    for current_frame in frames:
-        plt.imshow(current_frame, interpolation='nearest', cmap="gray")
-        plt.show()
 
-framerate = int(input("Enter framerate: "))
-if framerate > 60:
-    framerate = 60
+
+print("Decoding File")
+video_obj = create_video_obj()
+
+video_fps = video_obj.get_avg_fps()
+print(video_fps)
+requested_framerate = int(input("Enter framerate: "))
+if requested_framerate > video_fps:
+    requested_framerate = video_fps
+elif requested_framerate <= 0:
+    requested_framerate = 1
+
 print("Converting to arr")
-frames = video_to_arr(frame_skip=int(60/framerate))
-print("Converting to BW")
-simplified_frames = convert_video_to_GS(frames)
+frames = video_to_arr(video_obj, frame_skip=int(video_fps/requested_framerate))
+
+print("Converting to Greyscale")
+frames = convert_video_to_GS(frames)
+
 print("Converting to ascii")
-ascii_frames = video_to_ascii(simplified_frames)
-input("Press enter to start")
-draw_video(ascii_frames, framerate)
+frames = video_to_ascii(frames, reverse_map = False)
+
+input("Press enter to start: ")
+os.system('cls' if os.name == 'nt' else 'clear')
+draw_video(frames, requested_framerate)
+os.system('cls' if os.name == 'nt' else 'clear')
