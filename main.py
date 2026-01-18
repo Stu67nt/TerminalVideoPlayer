@@ -5,11 +5,12 @@ from decord import cpu, gpu
 import os
 import fpstimer
 import sys
+from playsound3 import playsound
 
 URLS = ['https://www.youtube.com/watch?v=FtutLA63Cp8']
 
 YDL_OPTS = {
-    'format': 'bestvideo[ext=mp4]/bestvideo'
+    'format': 'bestaudio'
 }
 
 def downloader(ydl_opts: dict, urls: list):
@@ -20,7 +21,11 @@ def downloader(ydl_opts: dict, urls: list):
 def create_video_obj(video_file: str="tester.mp4"):
     with open(video_file, 'rb') as f:
         #print(os.get_terminal_size().columns, os.get_terminal_size().lines)
-        vr = VideoReader(f, ctx=cpu(0), width=os.get_terminal_size().columns, height=os.get_terminal_size().lines)
+        try:
+            vr = VideoReader(f, ctx=cpu(0), width=os.get_terminal_size().columns, height=os.get_terminal_size().lines)
+        except OSError:
+            print("Could not get terminal size defaulting to 144p resolution")
+            vr = VideoReader(f, ctx=cpu(0), width=256, height=144)
         f.close()
     return vr
 
@@ -58,27 +63,27 @@ def convert_video_to_GS(frames):
         print(f"{frame_count}/{total}", end="\r")
     return frames
 
-def video_to_ascii(frames, reverse_map: bool = False):
+def video_to_ascii(frames, resolution_mode: str = "high", reverse_map: bool = False):
     ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
     if reverse_map:
         ASCII_COLOURMAP.reverse()
+
     frame_count = 0
     total = len(frames)
     all_ascii_frames = []
     for current_frame in frames:
         ascii_frame = []
-        indexed_frame = (current_frame[:] * len(ASCII_COLOURMAP) - 1) // 255
+        indexed_frame = ((current_frame[:] * (len(ASCII_COLOURMAP)-1)) // 255)
+
         for row in indexed_frame:
             row_string = ""
-            #row = (row[:]* len(ASCII_COLOURMAP)-1) // 255
             for pixel in row:
-                # pixel-1 to prevent index errors
-                #char_i = (pixel-1 * len(ASCII_COLOURMAP)) // 255  # rescaling
                 row_string += ASCII_COLOURMAP[int(pixel)]
             ascii_frame.append(row_string)
         all_ascii_frames.append(ascii_frame)
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
+
     return all_ascii_frames
 
 def store_frames(file, frames):
@@ -99,8 +104,6 @@ def draw_video(frames, framerate):
         timer.sleep()
         os.system('cls' if os.name == 'nt' else 'clear')
 
-
-
 print("Decoding File")
 video_obj = create_video_obj()
 
@@ -113,15 +116,18 @@ elif requested_framerate <= 0:
     requested_framerate = 1
 
 print("Converting to arr")
-frames = video_to_arr(video_obj, frame_skip=int(video_fps/requested_framerate))
+frames = video_to_arr(video_obj, frame_skip=int(video_fps//requested_framerate))
 
 print("Converting to Greyscale")
 frames = convert_video_to_GS(frames)
 
 print("Converting to ascii")
-frames = video_to_ascii(frames, reverse_map = False)
+frames = video_to_ascii(frames, reverse_map = True)
 
 input("Press enter to start: ")
 os.system('cls' if os.name == 'nt' else 'clear')
+
+sound = playsound("tester.mp3", block=False)
+
 draw_video(frames, requested_framerate)
 os.system('cls' if os.name == 'nt' else 'clear')
