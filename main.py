@@ -1,4 +1,3 @@
-import numpy as np
 import yt_dlp
 import numpy
 from decord import VideoReader
@@ -28,9 +27,9 @@ def create_video_obj(video_file: str="tester.mp4"):
         f.close()
     return vr
 
-# Try to optimise later
-def video_to_arr(vr, frame_skip: int=1):
+def video_to_arr(vr, frame_skip: int=4):
     all_frames = []
+
     for i in range(0,len(vr),frame_skip):
         frame = vr[i].asnumpy()
         all_frames.append(frame)
@@ -39,19 +38,28 @@ def video_to_arr(vr, frame_skip: int=1):
 
 
 def convert_video_to_GS(frames):
-    frames = np.array(frames)
     frame_count = 0
     total = len(frames)
-    gs_frames = (frames[:,:,:,0] * 0.299) + (frames[:,:,:,1] * 0.587) + (frames[:,:,:,2] * 0.114)
-    """
     for current_frame in frames:
         # vector method
         gs_frame = (current_frame[:,:,0]*0.299)+(current_frame[:,:,1]*0.587)+(current_frame[:,:,2]*0.114)
+        """
+        #for loop method
+        row_i, column_i = 0, 0
+
+        for row in current_frame:
+            for pixel in row:
+                r,g,b = pixel[0], pixel[1], pixel[2]
+                grey_val = (0.299*r)+(0.587*g)+(0.114*b)
+                gs_frame[row_i][column_i] = grey_val
+                column_i += 1
+            column_i = 0
+            row_i += 1
+"""
         frames[frame_count] = gs_frame
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
-    """
-    return gs_frames
+    return frames
 
 def video_to_ascii(frames, resolution_mode: str = "high", reverse_map: bool = False):
     if resolution_mode == "h":
