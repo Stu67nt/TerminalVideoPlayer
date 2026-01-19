@@ -1,3 +1,4 @@
+import numpy as np
 import yt_dlp
 import numpy
 from decord import VideoReader
@@ -8,10 +9,8 @@ import sys
 from playsound3 import playsound
 
 URLS = ['https://www.youtube.com/watch?v=FtutLA63Cp8']
-
-YDL_OPTS = {
-    'format': 'bestaudio'
-}
+YDL_VID = {'format': 'bestvideo'}
+YDL_AUD = {'format': 'bestaudio'}
 
 def downloader(ydl_opts: dict, urls: list):
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -29,9 +28,9 @@ def create_video_obj(video_file: str="tester.mp4"):
         f.close()
     return vr
 
-def video_to_arr(vr, frame_skip: int=4):
+# Try to optimise later
+def video_to_arr(vr, frame_skip: int=1):
     all_frames = []
-
     for i in range(0,len(vr),frame_skip):
         frame = vr[i].asnumpy()
         all_frames.append(frame)
@@ -40,31 +39,27 @@ def video_to_arr(vr, frame_skip: int=4):
 
 
 def convert_video_to_GS(frames):
+    frames = np.array(frames)
     frame_count = 0
     total = len(frames)
+    gs_frames = (frames[:,:,:,0] * 0.299) + (frames[:,:,:,1] * 0.587) + (frames[:,:,:,2] * 0.114)
+    """
     for current_frame in frames:
         # vector method
         gs_frame = (current_frame[:,:,0]*0.299)+(current_frame[:,:,1]*0.587)+(current_frame[:,:,2]*0.114)
-        """
-        #for loop method
-        row_i, column_i = 0, 0
-
-        for row in current_frame:
-            for pixel in row:
-                r,g,b = pixel[0], pixel[1], pixel[2]
-                grey_val = (0.299*r)+(0.587*g)+(0.114*b)
-                gs_frame[row_i][column_i] = grey_val
-                column_i += 1
-            column_i = 0
-            row_i += 1
-"""
         frames[frame_count] = gs_frame
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
-    return frames
+    """
+    return gs_frames
 
 def video_to_ascii(frames, resolution_mode: str = "high", reverse_map: bool = False):
-    ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
+    if resolution_mode == "h":
+        ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
+    elif resolution_mode == "l":
+        ASCII_COLOURMAP = list(r"@%#*+=-:. ")
+    else:
+        ASCII_COLOURMAP = list(r"@%#*+=-:. ")
     if reverse_map:
         ASCII_COLOURMAP.reverse()
 
@@ -104,12 +99,15 @@ def draw_video(frames, framerate):
         timer.sleep()
         os.system('cls' if os.name == 'nt' else 'clear')
 
+
+input("Adjust Resolution before pressing enter. ")
 print("Decoding File")
-video_obj = create_video_obj()
+video_obj = create_video_obj("tester.mp4")
 
 video_fps = video_obj.get_avg_fps()
 print(video_fps)
-requested_framerate = int(input("Enter framerate: "))
+requested_framerate = int(input("Enter framerate (should be factor of num above to avoid desync): "))
+resolution_mode = input("Enter resolution mode (h/l): ")
 if requested_framerate > video_fps:
     requested_framerate = video_fps
 elif requested_framerate <= 0:
