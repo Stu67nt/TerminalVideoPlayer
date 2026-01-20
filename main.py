@@ -1,4 +1,3 @@
-import yt_dlp
 import numpy
 from decord import VideoReader
 from decord import cpu
@@ -6,15 +5,7 @@ import os
 import fpstimer
 import sys
 from playsound3 import playsound
-
-URLS = ['https://www.youtube.com/watch?v=FtutLA63Cp8']
-YDL_VID = {'format': 'bestvideo'}
-YDL_AUD = {'format': 'bestaudio'}
-
-def downloader(ydl_opts: dict, urls: list):
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        error_code = ydl.download(URLS)
-    return error_code
+from colorama import just_fix_windows_console
 
 def create_video_obj(video_file: str):
     """
@@ -31,7 +22,7 @@ def create_video_obj(video_file: str):
         f.close()
     return vr
 
-def video_to_arr(vr, frame_skip: int=4):
+def video_to_arr(vr, colourmap, frame_skip: int=4, ):
     """
     Converts Video Object into a list of RGB frames which are each numpy arrays.
     :param vr: decord VideoReader Object
@@ -43,7 +34,10 @@ def video_to_arr(vr, frame_skip: int=4):
 
     for i in range(0,len(vr),frame_skip):
         frame = vr[i].asnumpy()
-        all_frames.append(frame)
+        grey = frame_to_gs(frame)
+        ascii = frame_to_ascii(grey, colourmap)
+        all_frames.append(ascii)
+        del frame, grey, ascii
         print(f"{i}/{len(vr)}", end="\r")
     return all_frames
 
@@ -65,13 +59,10 @@ def convert_video_to_GS(frames: list):
         print(f"{frame_count}/{total}", end="\r")
     return frames
 
-def video_to_ascii(frames, colourmap: list):
+def video_to_ascii(frames, colourmap):
     """
     :param frames: List of greyscaled numpy frames
-    :param resolution_mode: accepts 'h' or 'l'. Determines how large the colourmap should be (70 chars vs 10).
-    Larger colourmap is better for higher video resolutions
-    :param reverse_map: accepts 'y' or 'n'. Determines whether the colourmap should be reversed depending on terminal
-    style.
+    :param colourmap: determines the ascii characters avaliable for pixels to be mapped to
     :return: list of ascii frames in a 2d list. List structure as follows. Video consists of frames which consists
      of rows.
     """
@@ -81,32 +72,30 @@ def video_to_ascii(frames, colourmap: list):
     all_ascii_frames = []
 
     for current_frame in frames:
+        frame = ((current_frame[:] * (len(colourmap) - 1)) // 255).astype(numpy.uint8)
+        # Fancy numpy shit happens here
+        all_ascii_frames.append(["".join(colourmap[row]) for row in frame])
+        """    
         ascii_frame = []
         # Formula for calcing ascii value stolen from stackoverflow
         # colourmap length subtracted from 1 due to potential index errors.
-        indexed_frame = ((current_frame[:] * (len(ASCII_COLOURMAP)-1)) // 255)
+        indexed_frame = (current_frame[:] * (len(ASCII_COLOURMAP)-1)) // 255
 
         for row in indexed_frame:
             # generates list of each char in the row then adds it to the string at once.
             row_string = "".join(ASCII_COLOURMAP[int(p)] for p in row)
             ascii_frame.append(row_string)
-        all_ascii_frames.append(ascii_frame)
+        """
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
 
     return all_ascii_frames
 
-def store_frames(file, frames):
-    with open(file, "w") as f:
-        for frame in frames:
-            for row in frame:
-                f.write(str(row)+"\n")
-        f.close()
 
-def draw_video(frames, framerate):
+def draw_video(frames, framerate: int):
     """
     :param frames: ASCIIfied frames in a 2D list
-    :param framerate: How fast the video should play
+    :param framerate: How fast the video should play. ideally a factor of the initial video framerate
     :return: A good time :D
     """
     timer = fpstimer.FPSTimer(framerate)
@@ -114,59 +103,85 @@ def draw_video(frames, framerate):
     for frame_number in range(len(frames)):
         frame = ""
         for row in frames[frame_number]:
-            frame += row+"\n"
-        # Flush forces print to output as it is processing rather than wait until done processing
-        print(frame, flush=True)
+            frame += "\n"+row
         timer.sleep()
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-def frame_to_arr(frame):
-    for i in range(0,len(vr),frame_skip):
-        frame = vr[i].asnumpy()
-        all_frames.append(frame)
-        print(f"{i}/{len(vr)}", end="\r")
-    return frame.as_numpy()
+        print("\033[H\033[3J", end="")
+        print(frame)
 
 def frame_to_gs(frame):
-    frame = (frame[:, :, 0] * 0.299) + (frame[:, :, 1] * 0.587) + (frame[:, :, 2] * 0.114)
-    return frame
+    """
+    Greyscales a single frame and returns the frame
+    :param frame: singlular RGB numpy frame
+    :return: singuar Greyscaled numoy frame
+    """
+    return ((frame[:, :, 0] * 0.299) + (frame[:, :, 1] * 0.587) + (frame[:, :, 2] * 0.114)).astype('int64')
 
 def frame_to_ascii(frame, colourmap):
-    ascii_frame = []
+    """
+    Converts a greyscaled numoy frame into an ASCII frame
+    :param frame: Greyscaled numpy frame
+    :param colourmap: list of characters
+    :return: ASCIIfied frame as a 1D list of strings
+    """
     # Formula for calcing ascii value stolen from stackoverflow
     # colourmap length subtracted from 1 due to potential index errors.
-    frame = ((frame[:] * (len(colourmap)-1)) // 255)
-
-    for row in frame:
+    frame = (frame[:] * (len(colourmap)-1)) // 255
+    return ["".join(colourmap[row]) for row in frame]
+    """for row in frame:
         # generates list of each char in the row then adds it to the string at once.
         row_string = "".join(colourmap[int(p)] for p in row)
-        ascii_frame.append(row_string+"\n")
-    return ascii_frame
+        ascii_frame.append("\n"+row_string)
+    return ascii_frame"""
 
-def structure_frame(frame):
+def structure_frame(frame: list):
+    """
+    Converts ASCIIfied frame into a printable string
+    :param frame: ASCIIfied frame in a 1D list of strings. Each string should represent 1 row.
+    :return: String of full printable row
+    """
     return "".join(row for row in frame)
 
-def live_render(video_obj, colourmap, framerate):
+def live_render(video_obj, colourmap, framerate, audio_filepath: str = None):
+    """
+    Live rendering option of playblack. Renders the video as it is playing.
+    :param video_obj:
+    :param colourmap:
+    :param framerate:
+    :return:
+    """
+    input("Press Enter to start")
     timer = fpstimer.FPSTimer(framerate)
     frame_skip = int(video_obj.get_avg_fps() // framerate)
-    for i in range(0,len(video_obj),frame_skip):
-        frame = structure_frame(frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap))
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print(frame)
-        timer.sleep()
+    if audio_filepath:
+        try:
+            sound = playsound(audio_filepath, block=False)
+        except Exception as err:
+            input(f'{err} ')
 
-def prerender(vider_object, colourmap, framerate):
+    for i in range(0,len(video_obj),frame_skip):
+        frame_rows = frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap)
+        frame = "".join(frame_rows)+"\n"
+        timer.sleep()
+        print("\033[H\033[3J", end="")
+        print(frame)
+
+
+def prerender(vider_object, colourmap, framerate, audio_filepath: str = None):
     frame_skip = int(video_obj.get_avg_fps() // framerate)
 
-    frames = video_to_arr(video_obj, frame_skip=frame_skip)
-    frames = convert_video_to_GS(frames)
-    frames = video_to_ascii(frames, colourmap=colourmap)
+    frames = video_to_arr(video_obj, colourmap, frame_skip=frame_skip)
 
     input("Press enter to start: ")
     os.system('cls' if os.name == 'nt' else 'clear')
+    if audio_filepath:
+        try:
+            sound = playsound(audio_filepath, block=False)
+        except Exception as err:
+            input(f'{err} ')
     draw_video(frames, requested_framerate)
     os.system('cls' if os.name == 'nt' else 'clear')
 
+just_fix_windows_console()
 print("Any entries marked with a (*) are required. Rest can be left blank for default")
 render_mode = input("Live render or Pre render (l/p): ").lower()
 resolution_mode = input("Enter resolution mode (h/l) (l recomended): ").lower()
@@ -175,8 +190,8 @@ enable_audio = input("Enable audio(y/n): ").lower()
 
 ASCII_COLOURMAP = ""
 if enable_audio == "y":
-    audio_file = input("Enter fill file path of audio file (default no audio): ")
-else: pass
+    audio_filepath = input("Enter fill file path of audio file (default no audio): ")
+else: audio_filepath = None
 
 if resolution_mode == "h":
     ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
@@ -185,14 +200,16 @@ else:
 
 if colourmap_reversed == "y":
     ASCII_COLOURMAP.reverse()
-else: pass
-print(ASCII_COLOURMAP)
+ASCII_COLOURMAP = numpy.array(ASCII_COLOURMAP)
+
 # Means program waits for user to enter a valid video before progressing.
 video_obj = None
 while video_obj == None:
     try:
         video_file = input("Enter full file path of video (*): ")
+        #print(os.get_terminal_size().columns, os.get_terminal_size().lines)
         input("Adjust Resolution before pressing enter. ")
+        os.system('cls' if os.name == 'nt' else 'clear')
         print("Decoding File")
         video_obj = create_video_obj(video_file)
     except Exception as err:
@@ -213,17 +230,10 @@ elif requested_framerate <= 0:
     requested_framerate = 1
     print("framerate set to 1 fps")
 
-frame_skip = int(video_fps//requested_framerate)
-
-if enable_audio == "y":
-    try:
-        sound = playsound(audio_file, block=False)
-    except Exception as err:
-        print(f"Ran into an error whilst trying to process the video.\n {err}")
 
 if render_mode == "p":
-    prerender(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate)
+    prerender(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate, audio_filepath = audio_filepath)
 else:
-    live_render(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate)
+    live_render(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate, audio_filepath = audio_filepath)
 
 os.system('cls' if os.name == 'nt' else 'clear')
