@@ -1,7 +1,7 @@
 import yt_dlp
 import numpy
 from decord import VideoReader
-from decord import cpu, gpu
+from decord import cpu
 import os
 import fpstimer
 import sys
