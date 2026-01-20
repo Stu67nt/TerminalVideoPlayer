@@ -6,7 +6,6 @@ import os
 import fpstimer
 import sys
 from playsound3 import playsound
-from io import StringIO
 
 URLS = ['https://www.youtube.com/watch?v=FtutLA63Cp8']
 YDL_VID = {'format': 'bestvideo'}
@@ -68,7 +67,6 @@ def convert_video_to_GS(frames: list):
 
 def video_to_ascii(frames, resolution_mode: str = "h", reverse_map: str = "y"):
     """
-
     :param frames: List of greyscaled numpy frames
     :param resolution_mode: accepts 'h' or 'l'. Determines how large the colourmap should be (70 chars vs 10).
     Larger colourmap is better for higher video resolutions
