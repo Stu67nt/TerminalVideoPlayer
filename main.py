@@ -65,7 +65,7 @@ def convert_video_to_GS(frames: list):
         print(f"{frame_count}/{total}", end="\r")
     return frames
 
-def video_to_ascii(frames, resolution_mode: str = "h", reverse_map: str = "y"):
+def video_to_ascii(frames, colourmap: list):
     """
     :param frames: List of greyscaled numpy frames
     :param resolution_mode: accepts 'h' or 'l'. Determines how large the colourmap should be (70 chars vs 10).
@@ -76,13 +76,6 @@ def video_to_ascii(frames, resolution_mode: str = "h", reverse_map: str = "y"):
      of rows.
     """
     print("Converting to ascii")
-    if resolution_mode == "h":
-        ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
-    else:
-        ASCII_COLOURMAP = list(r"@%#*+=-:. ")
-    if reverse_map == "y":
-        ASCII_COLOURMAP.reverse()
-
     frame_count = 0
     total = len(frames)
     all_ascii_frames = []
@@ -127,20 +120,74 @@ def draw_video(frames, framerate):
         timer.sleep()
         os.system('cls' if os.name == 'nt' else 'clear')
 
+def frame_to_arr(frame):
+    for i in range(0,len(vr),frame_skip):
+        frame = vr[i].asnumpy()
+        all_frames.append(frame)
+        print(f"{i}/{len(vr)}", end="\r")
+    return frame.as_numpy()
+
+def frame_to_gs(frame):
+    frame = (frame[:, :, 0] * 0.299) + (frame[:, :, 1] * 0.587) + (frame[:, :, 2] * 0.114)
+    return frame
+
+def frame_to_ascii(frame, colourmap):
+    ascii_frame = []
+    # Formula for calcing ascii value stolen from stackoverflow
+    # colourmap length subtracted from 1 due to potential index errors.
+    frame = ((frame[:] * (len(colourmap)-1)) // 255)
+
+    for row in frame:
+        # generates list of each char in the row then adds it to the string at once.
+        row_string = "".join(colourmap[int(p)] for p in row)
+        ascii_frame.append(row_string+"\n")
+    return ascii_frame
+
+def structure_frame(frame):
+    return "".join(row for row in frame)
+
+def live_render(video_obj, colourmap, framerate):
+    timer = fpstimer.FPSTimer(framerate)
+    frame_skip = int(video_obj.get_avg_fps() // framerate)
+    for i in range(0,len(video_obj),frame_skip):
+        frame = structure_frame(frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap))
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(frame)
+        timer.sleep()
+
+def prerender(vider_object, colourmap, framerate):
+    frame_skip = int(video_obj.get_avg_fps() // framerate)
+
+    frames = video_to_arr(video_obj, frame_skip=frame_skip)
+    frames = convert_video_to_GS(frames)
+    frames = video_to_ascii(frames, colourmap=colourmap)
+
+    input("Press enter to start: ")
+    os.system('cls' if os.name == 'nt' else 'clear')
+    draw_video(frames, requested_framerate)
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 print("Any entries marked with a (*) are required. Rest can be left blank for default")
-
-resolution_mode = input("Enter resolution mode (h/l): ").lower()
+render_mode = input("Live render or Pre render (l/p): ").lower()
+resolution_mode = input("Enter resolution mode (h/l) (l recomended): ").lower()
 colourmap_reversed = input("Reverse Colourmap(y/n): ").lower()
 enable_audio = input("Enable audio(y/n): ").lower()
 
+ASCII_COLOURMAP = ""
 if enable_audio == "y":
     audio_file = input("Enter fill file path of audio file (default no audio): ")
-if colourmap_reversed != "y":
-    colourmap_reversed = "n"
-if resolution_mode != "h":
-    resolution_mode = "l"
+else: pass
 
+if resolution_mode == "h":
+    ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
+else:
+    ASCII_COLOURMAP = list(r"@%#*+=-:. ")
+
+if colourmap_reversed == "y":
+    ASCII_COLOURMAP.reverse()
+else: pass
+print(ASCII_COLOURMAP)
+# Means program waits for user to enter a valid video before progressing.
 video_obj = None
 while video_obj == None:
     try:
@@ -150,7 +197,6 @@ while video_obj == None:
         video_obj = create_video_obj(video_file)
     except Exception as err:
         print(f"Ran into an error whilst truing to process the video.\n {err}")
-
 
 video_fps = video_obj.get_avg_fps()
 print(f"Original video framerate: {video_fps}")
@@ -169,18 +215,15 @@ elif requested_framerate <= 0:
 
 frame_skip = int(video_fps//requested_framerate)
 
-frames = video_to_arr(video_obj, frame_skip=frame_skip)
-frames = convert_video_to_GS(frames)
-frames = video_to_ascii(frames, reverse_map = colourmap_reversed, resolution_mode = resolution_mode)
-
-input("Press enter to start: ")
-os.system('cls' if os.name == 'nt' else 'clear')
-
 if enable_audio == "y":
     try:
         sound = playsound(audio_file, block=False)
     except Exception as err:
-        print(f"Ran into an error whilst truing to process the video.\n {err}")
+        print(f"Ran into an error whilst trying to process the video.\n {err}")
 
-draw_video(frames, requested_framerate)
+if render_mode == "p":
+    prerender(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate)
+else:
+    live_render(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate)
+
 os.system('cls' if os.name == 'nt' else 'clear')
