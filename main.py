@@ -3,9 +3,8 @@ from decord import VideoReader
 from decord import cpu
 import os
 import fpstimer
-import sys
 from playsound3 import playsound
-from colorama import just_fix_windows_console
+from colorama import just_fix_windows_console  # Fixes Issue with ANSII codes not working
 
 def create_video_obj(video_file: str):
     """
@@ -22,7 +21,7 @@ def create_video_obj(video_file: str):
         f.close()
     return vr
 
-def video_to_arr(vr, colourmap, frame_skip: int=4, ):
+def video_to_ascii(vr, colourmap, frame_skip: int=4):
     """
     Converts Video Object into a list of RGB frames which are each numpy arrays.
     :param vr: decord VideoReader Object
@@ -42,12 +41,13 @@ def video_to_arr(vr, colourmap, frame_skip: int=4, ):
     return all_frames
 
 
+"""
 def convert_video_to_GS(frames: list):
-    """
+    
     Returns list of greyscaled frames in the video
     :param frames: list of RBG numpy frames
     :return: list of greyscaled numpy frames
-    """
+    
     print("Converting to Greyscale")
     frame_count = 0
     total = len(frames)
@@ -60,12 +60,12 @@ def convert_video_to_GS(frames: list):
     return frames
 
 def video_to_ascii(frames, colourmap):
-    """
+    
     :param frames: List of greyscaled numpy frames
     :param colourmap: determines the ascii characters avaliable for pixels to be mapped to
     :return: list of ascii frames in a 2d list. List structure as follows. Video consists of frames which consists
      of rows.
-    """
+
     print("Converting to ascii")
     frame_count = 0
     total = len(frames)
@@ -75,7 +75,7 @@ def video_to_ascii(frames, colourmap):
         frame = ((current_frame[:] * (len(colourmap) - 1)) // 255).astype(numpy.uint8)
         # Fancy numpy shit happens here
         all_ascii_frames.append(["".join(colourmap[row]) for row in frame])
-        """    
+         
         ascii_frame = []
         # Formula for calcing ascii value stolen from stackoverflow
         # colourmap length subtracted from 1 due to potential index errors.
@@ -85,11 +85,12 @@ def video_to_ascii(frames, colourmap):
             # generates list of each char in the row then adds it to the string at once.
             row_string = "".join(ASCII_COLOURMAP[int(p)] for p in row)
             ascii_frame.append(row_string)
-        """
+        
         frame_count += 1
         print(f"{frame_count}/{total}", end="\r")
 
     return all_ascii_frames
+"""
 
 
 def draw_video(frames, framerate: int):
@@ -133,13 +134,13 @@ def frame_to_ascii(frame, colourmap):
         ascii_frame.append("\n"+row_string)
     return ascii_frame"""
 
+"""
 def structure_frame(frame: list):
-    """
     Converts ASCIIfied frame into a printable string
     :param frame: ASCIIfied frame in a 1D list of strings. Each string should represent 1 row.
     :return: String of full printable row
-    """
     return "".join(row for row in frame)
+"""
 
 def live_render(video_obj, colourmap, framerate, audio_filepath: str = None):
     """
@@ -169,7 +170,7 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None):
 def prerender(vider_object, colourmap, framerate, audio_filepath: str = None):
     frame_skip = int(video_obj.get_avg_fps() // framerate)
 
-    frames = video_to_arr(video_obj, colourmap, frame_skip=frame_skip)
+    frames = video_to_ascii(video_obj, colourmap, frame_skip=frame_skip)
 
     input("Press enter to start: ")
     os.system('cls' if os.name == 'nt' else 'clear')
