@@ -56,7 +56,7 @@ def draw_video(frames: list, framerate: int):
 
     for frame in frames:  # Placed here to allow preparation for the next frame whilst the current one is present.
         print("\033[H\033[3J", end="")
-        print(frame) # Might enable flush but i found it to cause flickering on some lines.
+        print(frame, flush = True) # Might enable flush but i found it to cause flickering on some lines.
         timer.sleep()
 
 def frame_to_gs(frame):
