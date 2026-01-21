@@ -138,7 +138,9 @@ enable_audio = input("Enable audio(y/n) (default n): ").lower()
 ASCII_COLOURMAP = ""
 if enable_audio == "y":
     audio_filepath = input("Enter fill file path of audio file (default no audio): ")
-else: audio_filepath = None; enable_audiio = "n"
+else:
+    audio_filepath = None
+    enable_audio = "n"
 
 if quality == "h":
     ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
@@ -150,6 +152,9 @@ if colourmap_reversed == "y":
     ASCII_COLOURMAP.reverse()
 else:
     colourmap_reversed = "n"
+
+if render_mode != "l":
+    render_mode = "p"
 
 # Converting to a numpy array so numpy can do magic mapping stuff
 ASCII_COLOURMAP = numpy.array(ASCII_COLOURMAP)
