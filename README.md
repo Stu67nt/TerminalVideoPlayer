@@ -37,10 +37,12 @@ Some of the options have extra things that should be remembered when using this 
    Live rendering lets you skip the wait to watch a video however is not reccomended at higher resolutions due
    to frame drops which if watching with audio can cause the audio to be ahead of the video. To avoid this I 
    reccomend not watching videos at too large resolutions, ensuring the resolution of the video file is not 
-   too big (no bigger than 720p), and lowering the framerate.  
+   too big (for reference I was able to watch a 480p video at 30fps with no frame drops with a terminal 
+   resolution of 470x120). The most important optimisation is reducing the quality of the original video.
    
-   Alternatively, you can watch using a pre rendered video which requires you to wait but lets you watch higher
-   resolution and framerate.
+   Alternatively, you can watch using a pre rendered video which requires you to wait but lets you watch at 
+   higher resolution and framerates. However, this does use up more RAM and CPU whilst rendering as it needs
+   to remember each frame and I suck at optimising.
 
 #### Quality
  --- 
@@ -82,4 +84,6 @@ Doing later
 This project is provided as-is, free and open-source. 
 
 ## AI Usage
-AI was used for this project also only to provide assistance with some optimisations such as vectorised rendering.
+AI was used for this project only to provide assistance with some optimisations such as some of the for loop
+optimisations like when converting Greyscale to ASCII as well as introducing me to the del keyword to free up
+memory. 
