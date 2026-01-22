@@ -76,8 +76,12 @@ Doing later
 
 
 ## Troubleshooting & Tips
-
-Doing later
+- Make sure to adjust your terminal zoom before decoding to get desired resolution.
+- 99% of the time you will not be able to display a resolution much larger than 480p
+  in the terminal anyways from my testing so it is an easy optimisation to ensure the
+  video you are rendering is 480p or less.
+- If your video and audio are desyncing make sure your selected framerate is a factor
+  of the framerate of the original. 
 
 ## License
 
