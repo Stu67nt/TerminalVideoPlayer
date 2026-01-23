@@ -33,7 +33,7 @@ decoding the video. The program will warn you to adjust your resolution before c
 Some of the options have extra things that should be remembered when using this program.
 
 #### Render Mode
- --- 
+ 
    Live rendering lets you skip the wait to watch a video however is not reccomended at higher resolutions due
    to frame drops which if watching with audio can cause the audio to be ahead of the video. To avoid this I 
    reccomend not watching videos at too large resolutions, ensuring the resolution of the video file is not 
@@ -45,34 +45,36 @@ Some of the options have extra things that should be remembered when using this 
    to remember each frame and I suck at optimising.
 
 #### Quality
- --- 
+ 
   The main thing of note is that low quality can represent a pixel as 1 of 10 ASCII characters whilst high 
   can represent a pixel as 1 of 70 ASCII characters. From my testing (mostly with Bad Apple), the anti-aliasing
   is not the greatest. 
  
 #### Reverse Colours
- ---
+ 
   This setting should be enabled if your terminal font is white/a lighter colour as otherwise it will look 
   like the colours are reversed. Vice versa for people with a darker terminal font.
 
 #### Enabled Audio
- ---
+ 
   Enabling this will let you play audio along side the video. It will also prompt you to enter the filepath
   of the audio file you want to listen to but will not check if it is valid. If it is not then it will not
   play audio.
 
 #### Framerate
- ---
+ 
   For this if you want the audio to remain synced up with the video you should select a framerate which is a
   factor of the video. Let's say you are watching a 30fps video. The factors of 30 are 1, 2, 3, 5, 6, 10, 15, 
   and 30 so choosing any of those framerates will keep the video synced with the audio (assuming the video is
   able to maintain framerate)
   
 ## Build & Run
-### Prebuilt
-Doing later
-### Compile from scratch
-Doing later
+This program has only been tested to run on Windows 11 so I cannot guarantee function on other platforms.
+#### Windows
+    
+    pip install TerminalVideoPlayer
+    python
+    from TerminalVideoPlayer import TerminalVideoPlayer
 
 
 ## Troubleshooting & Tips
@@ -83,11 +85,7 @@ Doing later
 - If your video and audio are desyncing make sure your selected framerate is a factor
   of the framerate of the original. 
 
-## License
-
-This project is provided as-is, free and open-source. 
-
 ## AI Usage
 AI was used for this project only to provide assistance with some optimisations such as some of the for loop
-optimisations like when converting Greyscale to ASCII as well as introducing me to the del keyword to free up
-memory. 
+optimisations like when converting Greyscale to ASCII, introducing me to the del keyword to free up memory, 
+and doing basic debugging with spelling.
