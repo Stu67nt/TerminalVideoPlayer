@@ -73,8 +73,7 @@ This program has only been tested to run on Windows 11 so I cannot guarantee fun
 #### Windows
     
     pip install TerminalVideoPlayer
-    python
-    from TerminalVideoPlayer import TerminalVideoPlayer
+    terminal-video-player
 
 
 ## Troubleshooting & Tips
