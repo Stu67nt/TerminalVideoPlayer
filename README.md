@@ -3,6 +3,9 @@
 A Python ASCII Video Player in the Terminal with the ability to play video and audio both live and prerendered.
 
 ---
+## Video Demo
+[<img width="1893" height="952" alt="Screenshot 2026-01-24 161820" src="https://github.com/user-attachments/assets/9693274b-4adb-4d65-8866-8283cc4a2252" />](https://www.youtube.com/embed/Jd3jaw7pn30)
+---
 
 ## Features
 
