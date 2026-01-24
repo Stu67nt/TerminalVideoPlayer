@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "TerminalVideoPlayer"
+version = "0.0.3"
+description = "A TUI video player."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+dependencies = [
+    "numpy",
+    "decord",
+    "fpstimer",
+    "playsound3",
+    "colorama"
+]
+
+[project.scripts]
+terminal-video-player = "TerminalVideoPlayer.main:run"
+
+[project.urls]
+Homepage = "https://github.com/Stu67nt/TerminalVideoPlayer"
+
