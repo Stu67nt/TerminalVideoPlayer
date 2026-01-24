@@ -88,6 +88,6 @@ This program has only been tested to run on Windows 11 so I cannot guarantee fun
   of the framerate of the original. 
 
 ## AI Usage
-AI was used for this project only to provide assistance with some optimisations such as some of the for loop
-optimisations like when converting Greyscale to ASCII, introducing me to the del keyword to free up memory, 
-and doing basic debugging with spelling.
+ChatGPT was used for this project only to introduce me to optimisations such as some of the for loop optimisations
+like when converting Greyscale to ASCII, the del keyword to free up memory, and doing basic debugging with 
+mismatched variable names.
