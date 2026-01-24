@@ -200,9 +200,13 @@ def main():
 
     os.system('cls' if os.name == 'nt' else 'clear')
 
-while True:
-    main()
-    exit = input("Exit? (y/n) ").lower()
-    if exit == "y":
-        break
-    os.system('cls' if os.name == 'nt' else 'clear')
+def run():
+    while True:
+        main()
+        exit = input("Exit? (y/n) ").lower()
+        if exit == "y":
+            break
+        os.system('cls' if os.name == 'nt' else 'clear')
+
+if __name__ == "__main__":
+    run()
