@@ -35,13 +35,17 @@ def video_to_ascii(vr, colourmap, frame_skip: int=4):
     all_frames = []
 
     for i in range(0,len(vr), frame_skip):
-        frame = vr[i].asnumpy()
-        grey = frame_to_gs(frame)
-        ascii = frame_to_ascii(grey, colourmap)
-        all_frames.append("\n".join(ascii)+"\n")
-        # Freeing up memory of processed frame data
-        del frame, grey, ascii
-        print(f"{i}/{len(vr)}", end="\r")
+        try:
+            frame = vr[i].asnumpy()
+            grey = frame_to_gs(frame)
+            ascii_frame = frame_to_ascii(grey, colourmap)
+            all_frames.append(ascii_frame)
+            # Freeing up memory of processed frame data
+            del frame, grey, ascii_frame
+            print(f"{i}/{len(vr)}", end="\r")
+        except Exception as err:
+            print()
+            print(f"{err}", end="\r")
     return all_frames
 
 
@@ -56,7 +60,7 @@ def draw_video(frames: list, framerate: int):
 
     for frame in frames:  # Placed here to allow preparation for the next frame whilst the current one is present.
         print("\033[H\033[3J", end="")
-        print(frame, flush = True) # Might enable flush but i found it to cause flickering on some lines.
+        print(frame, flush=True)
         timer.sleep()
 
 def frame_to_gs(frame):
@@ -77,9 +81,12 @@ def frame_to_ascii(frame, colourmap):
     """
     # Formula for calcing ascii value stolen from stackoverflow
     # colourmap length subtracted from 1 due to potential index errors.
-    frame = (frame[:] * (len(colourmap)-1)) // 255
+    # Once frame is converted the colourmap is applied to whole frame
+    frame = colourmap[((frame[:] * (len(colourmap)-1)) // 255).astype(numpy.uint8)]
     # Maps entire row to corresponding ascii character and adds that row to the string as 1 long string.
-    return ["".join(colourmap[row]) for row in frame]
+    # frame is stiill in raw bytes so we need to decode it
+    pass
+    return frame.tobytes().decode()
 
 def live_render(video_obj, colourmap, framerate, audio_filepath: str = None):
     """
@@ -100,7 +107,7 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None):
 
     for i in range(0,len(video_obj),frame_skip):
         frame_rows = frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap)
-        frame = "\n".join(frame_rows)+"\n"
+        frame = frame_rows
         # ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
         print("\033[H\033[3J", end="")
         print(frame, flush = True)
@@ -144,28 +151,28 @@ def main():
         enable_audio = "n"
 
     if quality == "h":
-        ASCII_COLOURMAP = list(r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. ")
+        ASCII_COLOURMAP = r"$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,^`'. "
     else:
-        ASCII_COLOURMAP = list(r"@%#*+=-:. ")
+        ASCII_COLOURMAP = r"@%#*+=-:. "
         quality = "l"
 
     if colourmap_reversed == "y":
-        ASCII_COLOURMAP.reverse()
+        ASCII_COLOURMAP = ASCII_COLOURMAP[::-1]
     else:
         colourmap_reversed = "n"
 
     if render_mode != "l":
         render_mode = "p"
 
-    # Converting to a numpy array so numpy can do magic mapping stuff
-    ASCII_COLOURMAP = numpy.array(ASCII_COLOURMAP)
+    # Converting colourmap to a lookup table of raw bytes
+    lut = numpy.frombuffer(ASCII_COLOURMAP.encode(), dtype=numpy.uint8)
 
     # Means program waits for user to enter a valid video before progressing.
     video_obj = None
     while video_obj == None:
         try:
             video_file = input("Enter full file path of video (required): ")
-            print(f"Current Resolution: {os.get_terminal_size().columns, os.get_terminal_size().lines}")
+            #print(f"Current Resolution: {os.get_terminal_size().columns, os.get_terminal_size().lines}")
             input("Adjust Resolution before pressing enter. ")
             os.system('cls' if os.name == 'nt' else 'clear')
             print("Decoding File")
@@ -194,9 +201,9 @@ def main():
           f"Enabled Audio: {enable_audio}\n"
           f"Press enter to proceed\n")
     if render_mode == "l":
-        live_render(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate, audio_filepath = audio_filepath)
+        live_render(video_obj, colourmap=lut, framerate=requested_framerate, audio_filepath = audio_filepath)
     else:
-        prerender(video_obj, colourmap=ASCII_COLOURMAP, framerate=requested_framerate, audio_filepath = audio_filepath)
+        prerender(video_obj, colourmap=lut, framerate=requested_framerate, audio_filepath = audio_filepath)
 
     os.system('cls' if os.name == 'nt' else 'clear')
 
