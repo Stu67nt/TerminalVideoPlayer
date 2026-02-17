@@ -20,10 +20,11 @@ When you run the program you will be prompted to configure a few settings each t
 | Setting | Options | Explanation |
 |:-------:|:-------:|:-----------:|
 | Render Mode | 'l'/'p' | This lets you select how you want to render the <br> video. Whether to render it as you ware watching <br>or to render it all beforehand. |
+| Colour | 'y'/'n' | Lets you choose whether to render the video <br> coloured or using ASCII. |
 | Quality | 'h'/'l' | This lets you select how many ASCII characters <br> to use when displaying the video. |
 | Reverse Colours | 'y'/'n' | This setting lets you reverse the colourmap where <br> more full characters like "@" and "$" are moved <br> to the back and empty characters like " " and "." <br> are moved to the front. |
 | Enabled Audio | 'y'/'n' | Lets you decide whether to play audio with the video. <br> Note the audio has to be a seperate audio file <br>(ideally of the corresponding video). |
-| Framerate | A Number | This lets you choose the framerate to play the video back at. |
+| Framerate | A Number | This lets you choose the framerate <br> to play the video back at. |
 
 You will need to have the video you want to watch downloaded seperately from the audio of the video.
 
