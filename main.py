@@ -6,6 +6,7 @@ import fpstimer
 from playsound3 import playsound
 from colorama import just_fix_windows_console  # Fixes Issue with ANSII codes not working
 import time
+import sys
 
 def create_video_obj(video_file: str):
 	"""
@@ -74,7 +75,7 @@ def draw_video(frames: list, framerate: int):
 	timer = fpstimer.FPSTimer(framerate)
 
 	for frame in frames:  # Placed here to allow preparation for the next frame whilst the current one is present.
-		print("\033[H\033[3J", end="")
+		print("\033[H", end="")
 		print(frame, flush=True)
 		timer.sleep()
 
@@ -140,14 +141,14 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_
 		for i in range(0,len(video_obj),frame_skip):
 			frame = frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap)
 			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
-			print("\033[H\033[3J", end="")
+			print("\033[H", end="")
 			print(frame, flush = True)
 			timer.sleep()
 	else:
 		for i in range(0,len(video_obj),frame_skip):
 			frame = colour_frame(video_obj[i].asnumpy(), colourmap)
 			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
-			print("\033[H\033[3J", end="")
+			print("\033[H", end="")
 			print(frame, flush = True)
 			timer.sleep()
 
@@ -267,6 +268,7 @@ def main():
 				  audio_filepath = audio_filepath,
 				  is_coloured=print_colours)
 
+	print("\033[0m")
 	os.system('cls' if os.name == 'nt' else 'clear')
 
 def run():
