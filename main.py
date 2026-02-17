@@ -16,7 +16,7 @@ def create_video_obj(video_file: str):
 	"""
 	with open(video_file, 'rb') as f:
 		try:
-			vr = VideoReader(f, width=os.get_terminal_size().columns, height=os.get_terminal_size().lines-2)
+			vr = VideoReader(f, width=os.get_terminal_size().columns, height=os.get_terminal_size().lines-3)
 			print(os.get_terminal_size().columns, os.get_terminal_size().lines-2)
 		except OSError:  # Caused when running program in an IDE
 			print("Could not get terminal size defaulting to 144p resolution")
@@ -114,9 +114,7 @@ def colour_frame(frame, colourmap):
 	g = colourmap[1][frame[:, :, 1]]
 	b = colourmap[2][frame[:, :, 2]]
 
-	return "".join("".join(row) for row in r+g+b)
-
-	# return "".join("".join(row) for row in coloured)
+	return "".join((r+g+b).ravel())
 
 def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_coloured = False):
 	"""
@@ -149,7 +147,7 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_
 			frame = colour_frame(video_obj[i].asnumpy(), colourmap)
 			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
 			print("\033[H", end="")
-			print(frame, flush = True)
+			print(frame)
 			timer.sleep()
 
 
@@ -214,7 +212,7 @@ def main():
 	if colour == "y":
 		R_STR = numpy.array([f"\033[38;2;{i};" for i in range(256)], dtype=object)
 		G_STR = numpy.array([f"{i};" for i in range(256)], dtype=object)
-		B_STR = numpy.array([f"{i}m█\033[0m" for i in range(256)], dtype=object)
+		B_STR = numpy.array([f"{i}m█" for i in range(256)], dtype=object)
 		lut = [R_STR, G_STR, B_STR]
 		print_colours = True
 	else:
