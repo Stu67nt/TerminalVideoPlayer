@@ -2,11 +2,9 @@ import numpy
 from decord import VideoReader
 from decord import cpu
 import os
-import fpstimer
 from playsound3 import playsound
 from colorama import just_fix_windows_console  # Fixes Issue with ANSII codes not working
 import time
-import sys
 
 def create_video_obj(video_file: str):
 	"""
@@ -16,7 +14,7 @@ def create_video_obj(video_file: str):
 	"""
 	with open(video_file, 'rb') as f:
 		try:
-			vr = VideoReader(f, width=os.get_terminal_size().columns, height=os.get_terminal_size().lines-3)
+			vr = VideoReader(f, width=os.get_terminal_size().columns, height=os.get_terminal_size().lines-2)
 			print(os.get_terminal_size().columns, os.get_terminal_size().lines-2)
 		except OSError:  # Caused when running program in an IDE
 			print("Could not get terminal size defaulting to 144p resolution")
@@ -72,12 +70,27 @@ def draw_video(frames: list, framerate: int):
 	:param framerate: How fast the video should play. should be a factor of the initial video framerate
 	:return: A good time :D
 	"""
-	timer = fpstimer.FPSTimer(framerate)
 
-	for frame in frames:  # Placed here to allow preparation for the next frame whilst the current one is present.
+	fps = framerate
+	target_secs = 1.0 / fps  # Target amount of time spent rendering frame
+	i = 0
+	vid_len = len(frames)
+	start_time = time.perf_counter()  # Inital time to compare against
+
+	while i < vid_len:  # Stops when end of video reached
 		print("\033[H", end="")
-		print(frame, flush=True)
-		timer.sleep()
+		print(frames[i], flush=True)
+		elapsed_time = time.perf_counter() - start_time
+		expected_frame = int(elapsed_time / target_secs)  # Calculates frame we should be on
+		i = max(i + 1, expected_frame)
+		# translates to start time of the video + seconds of video passed
+		next_frame_time = start_time + (i * target_secs)
+
+		sleep_dur = next_frame_time - time.perf_counter()
+
+		# Sleep due can be negative
+		if sleep_dur > 0:
+			time.sleep(sleep_dur)
 
 def frame_to_gs(frame):
 	"""
@@ -116,7 +129,7 @@ def colour_frame(frame, colourmap):
 
 	return "".join((r+g+b).ravel())
 
-def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_coloured = False):
+def live_render(video_obj, colourmap, audio_filepath: str = None, is_coloured = False):
 	"""
 	Live rendering option of playblack. Renders the video as it is playing.
 	:param video_obj: decord VideoReader Object
@@ -126,9 +139,15 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_
 	:param is_coloured: Determines whether to render the fideo in colour or using ASCII
 	:return: A good time :D
 	"""
+	fps = video_obj.get_avg_fps()
+	target_secs = 1.0 / fps
+	i = 0
+	delay = 0
+	vid_len = len(video_obj)
+
 	input("Press Enter to start")
-	timer = fpstimer.FPSTimer(framerate)
-	frame_skip = int(video_obj.get_avg_fps() // framerate)
+
+	start_time = time.perf_counter()
 	if audio_filepath:
 		try:
 			sound = playsound(audio_filepath, block=False)
@@ -136,19 +155,38 @@ def live_render(video_obj, colourmap, framerate, audio_filepath: str = None, is_
 			input(f'{err} ')
 
 	if not is_coloured:
-		for i in range(0,len(video_obj),frame_skip):
+		while i < vid_len:
+			t1 = time.perf_counter()
 			frame = frame_to_ascii(frame_to_gs(video_obj[i].asnumpy()), colourmap)
 			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
 			print("\033[H", end="")
-			print(frame, flush = True)
-			timer.sleep()
+			print(frame)
+
+			elapsed_time = time.perf_counter()-start_time
+			expected_frame = int(elapsed_time / target_secs)
+			i = max(i + 1, expected_frame)
+			next_frame_time = start_time + (i*target_secs)
+
+			sleep_dur = next_frame_time - time.perf_counter()
+
+			if sleep_dur > 0:
+				time.sleep(sleep_dur)
 	else:
-		for i in range(0,len(video_obj),frame_skip):
+		while i < vid_len:
+			t1 = time.perf_counter()
 			frame = colour_frame(video_obj[i].asnumpy(), colourmap)
 			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
 			print("\033[H", end="")
 			print(frame)
-			timer.sleep()
+			elapsed_time = time.perf_counter() - start_time
+			expected_frame = int(elapsed_time / target_secs)
+			i = max(i + 1, expected_frame)
+			next_frame_time = start_time + (i * target_secs)
+
+			sleep_dur = next_frame_time - time.perf_counter()
+
+			if sleep_dur > 0:
+				time.sleep(sleep_dur)
 
 
 def prerender(video_obj, colourmap, framerate, audio_filepath: str = None, is_coloured = False):
@@ -230,39 +268,26 @@ def main():
 			print("Decoding File")
 			video_obj = create_video_obj(video_file)
 		except Exception as err:
-			print(f"Ran into an error whilst truing to process the video.\n {err}")
+			print(f"Ran into an error whilst trying to process the video.\n {err}")
 
 	video_fps = video_obj.get_avg_fps()
-	print(f"Original video framerate: {video_fps}")
 
-	requested_framerate = ""
-	while not requested_framerate.isdigit():
-		requested_framerate = input("Enter framerate (should be a factor of num above to avoid desync): ")
-	requested_framerate = int(requested_framerate)
-
-	if requested_framerate > video_fps:
-		requested_framerate = video_fps
-		print("framerate set to video fps")
-	elif requested_framerate <= 0:
-		requested_framerate = 1
-		print("framerate set to 1 fps")
-
-	input(f"Render Mode: {render_mode}\n"
+	input(f"Original video framerate: {video_fps}\n"
+		  f"Render Mode: {render_mode}\n"
 		  f"Resolution: {quality}\n"
 		  f"Reversed Colourmap: {colourmap_reversed}\n"
 		  f"Enabled Audio: {enable_audio}\n"
-		  f"Print Colours: {colour}\n"
+		  f"Colour: {colour}\n"
 		  f"Press enter to proceed\n")
 	if render_mode == "l":
 		live_render(video_obj,
 					colourmap=lut,
-					framerate=requested_framerate,
 					audio_filepath = audio_filepath,
 					is_coloured=print_colours)
 	else:
 		prerender(video_obj,
 				  colourmap=lut,
-				  framerate=requested_framerate,
+				  framerate=video_fps,
 				  audio_filepath = audio_filepath,
 				  is_coloured=print_colours)
 
