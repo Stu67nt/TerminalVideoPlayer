@@ -16,6 +16,8 @@ A Python ASCII Video Player in the Terminal with the ability to play video and a
 - Video resolution scales with terminal size.
 
 ## Usage Tutorial
+For testing convenience in the github a download of Bad Apple has been provided. You can probably just spam enter through the settings you are prompted for, and it will be fine. If you just want to see it work. For actual use read below.
+
 When you run the program, you will be prompted to configure a few settings each time you want to watch a video. Here is an explanation of all of them.   
 | Setting | Options | Explanation |
 |:-------:|:-------:|:-----------:|
@@ -26,6 +28,8 @@ When you run the program, you will be prompted to configure a few settings each 
 | Reverse Colourmap | 'y'/'n' | This setting lets you reverse the colourmap <br> where more full characters like "@" and "$" are <br> moved to the back, and empty characters like " " <br> and "." are moved to the front. Recommend to <br> not reverse on light coloured ones.|
 
 ### Changing Resolution
+<h4>THIS IS THE MOST IMPORTANT PART, AS OTHERWISE THE OUTPUT MIGHT LOOK SHIT.</h4>
+   
 To change the video resolution quickly, you need to zoom out/in in the terminal and/or change the font
 size. To zoom in or out quickly in the Windows terminal, hold CTRL+Scroll. You need to adjust this before
 decoding the video. The program will warn you to adjust your resolution before continuing. 
@@ -61,7 +65,7 @@ Some of the options have extra things that should be remembered when using this 
   
 ## Build & Run
 This program has only been tested to run on Windows 11, so I cannot guarantee function on other platforms.  
-But there is no reason why it should not.
+But there is no reason why it should not work.
 #### Download Commands
     
     pip install TerminalVideoPlayer
