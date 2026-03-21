@@ -71,6 +71,10 @@ But there is no reason why it should not work.
     pip install TerminalVideoPlayer
     terminal-video-player
 
+OR FOR FASTER (more broken) UPDATES
+
+    pip install git+https://github.com/Stu67nt/TerminalVideoPlayer/tree/master
+    terminal-video-player
 
 ## Troubleshooting & Tips
 - Make sure to adjust your terminal zoom before decoding to get the desired resolution.
