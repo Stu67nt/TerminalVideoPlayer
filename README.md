@@ -73,7 +73,7 @@ But there is no reason why it should not work.
 
 OR FOR FASTER (more broken) UPDATES
 
-    pip install git+https://github.com/Stu67nt/TerminalVideoPlayer/tree/master
+    pip install git+https://github.com/Stu67nt/TerminalVideoPlayer
     terminal-video-player
 
 ## Troubleshooting & Tips
