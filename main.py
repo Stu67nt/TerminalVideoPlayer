@@ -222,6 +222,7 @@ def terminal_camera(colourmap, is_coloured):
 	while True:
 		ret, frame = cap.read()
 		frame = cv.resize(frame, (os.get_terminal_size().columns, os.get_terminal_size().lines-2))
+		frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
 		if not ret:
 			print("Can't receive frame (stream end?). Exiting ...")
