@@ -1,10 +1,11 @@
 import numpy
-from decord import VideoReader
+from decord import VideoReader, AudioReader
 from decord import cpu
 import os
-from playsound3 import playsound
 from colorama import just_fix_windows_console  # Fixes Issue with ANSII codes not working
 import time
+import cv2 as cv
+import sounddevice
 
 def create_video_obj(video_file: str):
 	"""
@@ -21,6 +22,16 @@ def create_video_obj(video_file: str):
 			vr = VideoReader(f, width=256, height=144)
 		f.close()
 	return vr
+
+def extract_audio(video_file: str):
+	"""
+	Converts a video file in numpy array for play
+	:param video_file: File path for video file either relevative or exact.
+	:return: decord AudioReader Object in numpy array format
+	"""
+	ar = AudioReader(video_file, ctx=cpu(0), sample_rate=44100, mono=True)
+	samples = ar[:].asnumpy()
+	return samples
 
 def video_to_ascii(vr, colourmap, frame_skip: int=4, is_coloured = False):
 	"""
@@ -62,7 +73,6 @@ def video_to_ascii(vr, colourmap, frame_skip: int=4, is_coloured = False):
 
 	return all_frames
 
-
 def draw_video(frames: list, framerate: int):
 	"""
 	Prints every frame in the frames list with a delay decided by framerate
@@ -71,8 +81,7 @@ def draw_video(frames: list, framerate: int):
 	:return: A good time :D
 	"""
 
-	fps = framerate
-	target_secs = 1.0 / fps  # Target amount of time spent rendering frame
+	target_secs = 1.0 / framerate  # Target amount of time spent rendering frame
 	i = 0
 	vid_len = len(frames)
 	start_time = time.perf_counter()  # Inital time to compare against
@@ -129,13 +138,12 @@ def colour_frame(frame, colourmap):
 
 	return "".join((r+g+b).ravel())
 
-def live_render(video_obj, colourmap, audio_filepath: str = None, is_coloured = False):
+def live_render(video_obj, colourmap, audio, is_coloured = False):
 	"""
 	Live rendering option of playblack. Renders the video as it is playing.
 	:param video_obj: decord VideoReader Object
-	:param colourmap: numpy array of each ascii character allowed
-	:param framerate: How fast the video should play. should be a factor of the initial video framerate
-	:param audio_filepath: Filepath for the audio
+	:param colourmap: numpy array of each ascii/colours character allowed
+	:param audio: decord AudioReader Object in numpy array
 	:param is_coloured: Determines whether to render the fideo in colour or using ASCII
 	:return: A good time :D
 	"""
@@ -145,14 +153,11 @@ def live_render(video_obj, colourmap, audio_filepath: str = None, is_coloured = 
 	delay = 0
 	vid_len = len(video_obj)
 
-	input("Press Enter to start")
-
 	start_time = time.perf_counter()
-	if audio_filepath:
-		try:
-			sound = playsound(audio_filepath, block=False)
-		except Exception as err:
-			input(f'{err} ')
+	try:
+		sounddevice.play(audio.T)
+	except:
+		pass
 
 	if not is_coloured:
 		while i < vid_len:
@@ -187,15 +192,14 @@ def live_render(video_obj, colourmap, audio_filepath: str = None, is_coloured = 
 
 			if sleep_dur > 0:
 				time.sleep(sleep_dur)
+	os.system('cls' if os.name == 'nt' else 'clear')
 
-
-def prerender(video_obj, colourmap, framerate, audio_filepath: str = None, is_coloured = False):
+def prerender(video_obj, colourmap, framerate, audio, is_coloured = False):
 	"""
 		Renders the video before playing it back. Reccomended for watching at higher resolutions.
 		:param video_obj: decord VideoReader Object
 		:param colourmap: numpy array of each ascii character allowed
-		:param framerate: How fast the video should play. should be a factor of the initial video framerate
-		:param audio_filepath: Filepath for the audio
+		:param audio: decord AudioReader Object in numpy array
 		:param is_coloured: Determines whether to render the fideo in colour or using ASCII
 		:return: A good time :D
 		"""
@@ -204,32 +208,59 @@ def prerender(video_obj, colourmap, framerate, audio_filepath: str = None, is_co
 
 	input("Press enter to start: ")
 	os.system('cls' if os.name == 'nt' else 'clear')
-	if audio_filepath:
-		try:
-			sound = playsound(audio_filepath, block=False)
-		except Exception as err:
-			input(f'{err} ')
+	try:
+		sounddevice.play(audio.T)
+	except:
+		pass
 	draw_video(frames, framerate)
 	os.system('cls' if os.name == 'nt' else 'clear')
+
+def terminal_camera(colourmap, is_coloured):
+	cap = cv.VideoCapture(0)
+	if not cap.isOpened():
+		print("Cannot open camera")
+	while True:
+		ret, frame = cap.read()
+		frame = cv.resize(frame, (os.get_terminal_size().columns, os.get_terminal_size().lines-2))
+
+		if not ret:
+			print("Can't receive frame (stream end?). Exiting ...")
+			break
+
+		if not is_coloured:
+			frame = frame_to_ascii(frame_to_gs(frame), colourmap)
+			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
+			print("\033[H", end="")
+			print(frame)
+		else:
+			frame = colour_frame(frame, colourmap)
+			# ANSII escape character. Moves cursor to the top of the terminal and clears everything below cursor
+			print("\033[H", end="")
+			print(frame)
+
+	cap.release()
+	cv.destroyAllWindows()
 
 def main():
 	quality = "N/A"
 	colourmap_reversed = "N/A"
+	render_mode = "N/A"
+	video_fps = "N/A"
+	video_obj = None
+	audio_obj = None
 
 	just_fix_windows_console()  # Needed as otherwise ANSII Escape codes bug out.
-	render_mode = input("Live render or Pre render (l/p) (default prerender): ").lower()
+	camera = input("Display camera? (y/n) (default n): ").lower()
+	if camera != "y":
+		camera = "n"
+		render_mode = input("Live render or Pre render (l/p) (default live (l)): ").lower()
+
 	colour = input("Use colour (y/n) (default n): ").lower()
 	if colour != "y":
 		quality = input("Enter quality (h/l) (l recomended) (default l): ").lower()
 		colourmap_reversed = input("Reverse Colourmap(y/n) (default n): ").lower()
-	enable_audio = input("Enable audio(y/n) (default n): ").lower()
 
 	ASCII_COLOURMAP = ""
-	if enable_audio == "y":
-		audio_filepath = input("Enter fill file path of audio file (default no audio): ")
-	else:
-		audio_filepath = None
-		enable_audio = "n"
 
 	if colour != "y":
 		if quality == "h":
@@ -243,8 +274,9 @@ def main():
 		else:
 			colourmap_reversed = "n"
 
-	if render_mode != "l":
-		render_mode = "p"
+	if camera != "y":
+		if render_mode != "p":
+			render_mode = "l"
 
 	# Converting colourmap to a lookup table of raw bytes
 	if colour == "y":
@@ -256,40 +288,47 @@ def main():
 	else:
 		lut = numpy.frombuffer(ASCII_COLOURMAP.encode(), dtype=numpy.uint8)
 		print_colours = False
+		colour = "n"
 
-	# Means program waits for user to enter a valid video before progressing.
-	video_obj = None
-	while video_obj is None:
-		try:
-			video_file = input("Enter full file path of video (required): ")
-			#print(f"Current Resolution: {os.get_terminal_size().columns, os.get_terminal_size().lines}")
-			input("Adjust Resolution before pressing enter. ")
-			os.system('cls' if os.name == 'nt' else 'clear')
-			print("Decoding File")
-			video_obj = create_video_obj(video_file)
-		except Exception as err:
-			print(f"Ran into an error whilst trying to process the video.\n {err}")
-
-	video_fps = video_obj.get_avg_fps()
+	if camera == "n":
+		# Means program waits for user to enter a valid video before progressing.
+		while video_obj is None:
+			try:
+				video_file = input("Enter full file path of video (required): ").strip(r"\"").strip()
+				print(f"Current Resolution: {os.get_terminal_size().columns, os.get_terminal_size().lines}")
+				input("Adjust Resolution before pressing enter. ")
+				os.system('cls' if os.name == 'nt' else 'clear')
+				print("Decoding File")
+				video_obj = create_video_obj(video_file)
+			except Exception as err:
+				print(f"Ran into an error whilst trying to process the video.\n {err}")
+			try:
+				audio_obj = extract_audio(video_file)
+			except Exception as err:
+				print(f"Failed to extract audio from video. {err}\n"
+					  f"Playing without audio. ")
+		video_fps = video_obj.get_avg_fps()
 
 	input(f"Original video framerate: {video_fps}\n"
 		  f"Render Mode: {render_mode}\n"
 		  f"Resolution: {quality}\n"
 		  f"Reversed Colourmap: {colourmap_reversed}\n"
-		  f"Enabled Audio: {enable_audio}\n"
 		  f"Colour: {colour}\n"
 		  f"Press enter to proceed\n")
+
 	if render_mode == "l":
 		live_render(video_obj,
 					colourmap=lut,
-					audio_filepath = audio_filepath,
+					audio = audio_obj,
 					is_coloured=print_colours)
-	else:
+	elif render_mode == "p":
 		prerender(video_obj,
 				  colourmap=lut,
 				  framerate=video_fps,
-				  audio_filepath = audio_filepath,
+				  audio = audio_obj,
 				  is_coloured=print_colours)
+	elif camera == "y":
+		terminal_camera(lut, print_colours)
 
 	print("\033[0m")
 	os.system('cls' if os.name == 'nt' else 'clear')
