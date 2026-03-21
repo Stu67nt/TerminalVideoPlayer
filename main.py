@@ -258,7 +258,7 @@ def main():
 	colour = input("Use colour (y/n) (default n): ").lower()
 	if colour != "y":
 		quality = input("Enter quality (h/l) (l recomended) (default l): ").lower()
-		colourmap_reversed = input("Reverse Colourmap(y/n) (default n): ").lower()
+		colourmap_reversed = input("Reverse Colourmap(y/n) (default y): ").lower()
 
 	ASCII_COLOURMAP = ""
 
@@ -269,10 +269,11 @@ def main():
 			ASCII_COLOURMAP = r"@%#*+=-:. "
 			quality = "l"
 
-		if colourmap_reversed == "y":
-			ASCII_COLOURMAP = ASCII_COLOURMAP[::-1]
+		if colourmap_reversed == "n":
+			pass
 		else:
-			colourmap_reversed = "n"
+			ASCII_COLOURMAP = ASCII_COLOURMAP[::-1]
+			colourmap_reversed = "y"
 
 	if camera != "y":
 		if render_mode != "p":
