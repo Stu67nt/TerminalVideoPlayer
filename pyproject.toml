@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "TerminalVideoPlayer"
-version = "0.0.3"
+version = "1.2.0"
 description = "A TUI video player."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -18,8 +18,9 @@ dependencies = [
     "numpy",
     "decord",
     "fpstimer",
-    "playsound3",
-    "colorama"
+    "sounddevice",
+    "colorama",
+    "opencv-python"
 ]
 
 [project.scripts]
