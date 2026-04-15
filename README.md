@@ -4,7 +4,7 @@ A Python ASCII Video Player in the Terminal with the ability to play video and a
 
 ---
 ## Video Demo
-[<img width="1893" height="952" alt="Screenshot 2026-01-24 161820" src="https://github.com/user-attachments/assets/9693274b-4adb-4d65-8866-8283cc4a2252" />](https://www.youtube.com/embed/Jd3jaw7pn30)
+[<img width="1893" height="952" alt="Screenshot 2026-01-24 161820" src="https://github.com/user-attachments/assets/9693274b-4adb-4d65-8866-8283cc4a2252" />](https://youtu.be/IqSOCbOGA5Q)
 ---
 
 ## Features
@@ -14,9 +14,10 @@ A Python ASCII Video Player in the Terminal with the ability to play video and a
 - Plays audio simultaneously with the video.
 - No audio-video desync
 - Video resolution scales with terminal size.
+- Watching a video in colour and ASCII art
 
 ## Usage Tutorial
-For testing convenience in the github a download of Bad Apple has been provided. You can probably just spam enter through the settings you are prompted for, and it will be fine. If you just want to see it work. For actual use read below.
+For testing convenience in the github a download of Bad Apple has been provided. You can probably just spam enter through the settings you are prompted for, and it will be fine, if you just want to see it work. For actual use, read below.
 
 When you run the program, you will be prompted to configure a few settings each time you want to watch a video. Here is an explanation of all of them.   
 | Setting | Options | Explanation |
@@ -31,8 +32,9 @@ When you run the program, you will be prompted to configure a few settings each 
 <h4>THIS IS THE MOST IMPORTANT PART, AS OTHERWISE THE OUTPUT MIGHT LOOK SHIT.</h4>
    
 To change the video resolution quickly, you need to zoom out/in in the terminal and/or change the font
-size. To zoom in or out quickly in the Windows terminal, hold CTRL+Scroll. You need to adjust this before
-decoding the video. The program will warn you to adjust your resolution before continuing. 
+size. To zoom in or out quickly in the Windows terminal, hold CRTL + - to increase resolution and 
+CRTL + + to decrease the resolution. You need to adjust this before decoding the video. The program
+will warn you to adjust your resolution before continuing. 
 
 ### Extra explanations
 Some of the options have extra things that should be remembered when using this program.
