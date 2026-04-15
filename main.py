@@ -298,20 +298,22 @@ def main():
 			try:
 				video_file = input("Enter full file path of video (required): ").strip(r"\"").strip()
 				print(f"Current Resolution: {os.get_terminal_size().columns, os.get_terminal_size().lines}")
-				input("Adjust Resolution before pressing enter. ")
+				input("Adjust Resolution before pressing enter. \n"
+					  "(Use CRTL + +/- to decrease/increase resolution)")
 				os.system('cls' if os.name == 'nt' else 'clear')
-				print("Decoding File")
+				print("Extracting video")
 				video_obj = create_video_obj(video_file)
 			except Exception as err:
-				print(f"Ran into an error whilst trying to process the video.\n {err}")
+				print(f"Ran into an error whilst trying to process the video. Please try a different one.\n {err}")
 			try:
+				print("Extracting Audio")
 				audio_obj = extract_audio(video_file)
 			except Exception as err:
-				print(f"Failed to extract audio from video. {err}\n"
+				print(f"Failed to extract audio from video (possibly video has no audio embedded).\n"
 					  f"Playing without audio. ")
 		video_fps = video_obj.get_avg_fps()
 
-	input(f"Original video framerate: {video_fps}\n"
+	input(f"Original video framerate: {round(video_fps)}\n"
 		  f"Render Mode: {render_mode}\n"
 		  f"Resolution: {quality}\n"
 		  f"Reversed Colourmap: {colourmap_reversed}\n"
