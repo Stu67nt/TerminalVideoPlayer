@@ -246,7 +246,7 @@ def main():
 	quality = "N/A"
 	colourmap_reversed = "N/A"
 	render_mode = "N/A"
-	video_fps = "N/A"
+	video_fps = 0
 	video_obj = None
 	audio_obj = None
 
