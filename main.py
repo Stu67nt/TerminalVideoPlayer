@@ -303,14 +303,16 @@ def main():
 				os.system('cls' if os.name == 'nt' else 'clear')
 				print("Extracting video")
 				video_obj = create_video_obj(video_file)
+
+				try:
+					print("Extracting Audio")
+					audio_obj = extract_audio(video_file)
+				except Exception as err:
+					print(f"Failed to extract audio from video (possibly video has no audio embedded).\n"
+						  f"Playing without audio. ")
 			except Exception as err:
 				print(f"Ran into an error whilst trying to process the video. Please try a different one.\n {err}")
-			try:
-				print("Extracting Audio")
-				audio_obj = extract_audio(video_file)
-			except Exception as err:
-				print(f"Failed to extract audio from video (possibly video has no audio embedded).\n"
-					  f"Playing without audio. ")
+
 		video_fps = video_obj.get_avg_fps()
 
 	input(f"Original video framerate: {round(video_fps)}\n"
